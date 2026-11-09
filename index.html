@@ -165,6 +165,10 @@ dialog h3{margin:0 0 14px;font-size:18px}
 @media(prefers-reduced-motion:reduce){
 .card,.stat,.panel,.timer,.tab,.btn,.add,.chip,.edit{transition:none}
 .card:active,.stat:active,.panel:active,.timer:active,.tab:active,.btn:active,.add:active,.chip:active{transform:none}}
+.ev input:disabled{pointer-events:none;opacity:.35}
+.ev input:disabled:checked{opacity:.6}
+.ev.locked label{cursor:not-allowed}
+.stat.hot strong{color:#ffb44f;text-shadow:0 0 18px #ffb44f88}
 @media(max-width:820px){.summary{grid-template-columns:repeat(2,1fr)}.actions{margin-left:0;width:100%}.grid{grid-template-columns:minmax(0,1fr)}header.top{padding-top:24px}}
 @media(max-width:480px){.ev{grid-template-columns:84px 1fr auto}.tag{display:none}}
 @media print{
@@ -191,7 +195,7 @@ body{background:#fff}h1{background:none;color:#111}
   <div class="stat" style="--c:var(--study)"><strong id="sHours">0 hrs</strong><span>Study hours planned</span></div>
   <div class="stat" style="--c:var(--personal)"><strong id="sTasks">0</strong><span>Tasks this week</span></div>
   <div class="stat" style="--c:var(--class)"><strong id="sClass">0</strong><span>Classes and labs</span></div>
-  <div class="stat" style="--c:var(--gym)"><strong id="sGym">0</strong><span>Gym sessions</span></div>
+  <div class="stat" style="--c:var(--lab)"><strong id="sStreak">0 days</strong><span id="sStreakSub">Day streak · best 0</span></div>
 </section>
 
 <section class="timer" id="timer" aria-label="Focus timer">
@@ -221,7 +225,6 @@ body{background:#fff}h1{background:none;color:#111}
         <button id="backupBtn">Download backup</button>
         <button id="restoreBtn">Restore backup (replaces current)</button>
         <button id="sndBtn">Sounds: Off</button>
-        <button id="resetBtn">Reset checkmarks</button>
         <button id="clearBtn">Clear all tasks</button>
       </div>
     </details>
@@ -248,7 +251,9 @@ body{background:#fff}h1{background:none;color:#111}
   <h3>How it works</h3>
   <p>Tap + on any day to add a task. Tap the pencil on a task to change its time, name or type, or to delete it.</p>
   <p>In the task window, “Also copy to” repeats a task on other days, so you only type it once.</p>
-  <p>A task you have not ticked within 30 minutes after it ends is crossed out as missed. You can still tick it later. Finish all the study, class, lab and gym tasks of a day to get a celebration.</p>
+  <p>You can tick a task only from when it starts until 30 minutes after it ends, so future tasks stay locked. After that it is crossed out as missed and can no longer be changed.</p>
+  <p>Finish every task of a day to keep your streak going and get a celebration. Days with no tasks do not break it. Ticks reset automatically every week.</p>
+  <p>Editing or deleting a task that has not started yet shows a warning, because it changes what you need to finish.</p>
   <p>Sounds are off by default. Open Data, then tap Sounds to cycle Off, Soft and Normal. Cues play when you tick or untick a task, save or delete one, start or pause the timer, in the last 5 seconds of a timer, when a session ends, when a task becomes missed, and when you finish a day.</p>
   <p>Your plan is saved only in this browser on this device. Use Data, then Download backup, to keep a copy or move it to another device.</p>
 </section>
@@ -282,7 +287,7 @@ const DAYS=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunda
 const CATS={study:"Study",class:"Class",lab:"Lab",gym:"Gym",travel:"Travel",personal:"Personal"};
 const KEY="weeklyPlannerAppV1";
 function uid(){return Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-3)}
-function blank(){return{tasks:Object.fromEntries(DAYS.map(d=>[d,[]])),checks:{}}}
+function blank(){return{tasks:Object.fromEntries(DAYS.map(d=>[d,[]])),checks:{},history:{},best:0}}
 function clean(v){
   if(!v||typeof v!=="object"||!v.tasks||typeof v.tasks!=="object")return null;
   const o=blank();
@@ -290,6 +295,8 @@ function clean(v){
     .filter(t=>t&&typeof t.title==="string"&&Number.isFinite(t.s)&&Number.isFinite(t.e)&&t.e>t.s&&t.s>=0&&t.e<=1440&&CATS[t.cat])
     .map(t=>({id:String(t.id||uid()),s:t.s,e:t.e,title:t.title.slice(0,80),note:String(t.note||"").slice(0,120),cat:t.cat}))});
   if(v.checks&&typeof v.checks==="object")o.checks=v.checks;
+  if(v.history&&typeof v.history==="object")Object.keys(v.history).forEach(k=>{if(/^\d{4}-\d{2}-\d{2}$/.test(k)&&v.history[k])o.history[k]=true});
+  if(Number.isFinite(v.best)&&v.best>0)o.best=Math.min(9999,Math.round(v.best));
   return o;
 }
 function load(){try{return clean(JSON.parse(localStorage.getItem(KEY)))||blank()}catch(e){return blank()}}
@@ -302,7 +309,7 @@ const fromT=v=>{const m=/^(\d{2}):(\d{2})$/.exec(v);return m?+m[1]*60+ +m[2]:NaN
 function fmtT(m){const h=Math.floor(m/60)%24,ap=h>=12?"PM":"AM";return (h%12||12)+":"+pad(m%60)+" "+ap}
 const range=t=>fmtT(t.s)+"–"+fmtT(t.e);
 const fmtN=n=>(Math.round(n*100)/100).toString();
-const todayName=DAYS[(new Date().getDay()+6)%7];
+let todayName=DAYS[(new Date().getDay()+6)%7];
 let view=innerWidth<820?todayName:"all";
 const nowMins=()=>{const n=new Date();return n.getHours()*60+n.getMinutes()};
 const sortDay=d=>st.tasks[d].sort((a,b)=>a.s-b.s||a.e-b.e);
@@ -330,29 +337,33 @@ function renderNow(){
     :`<span class="pulse"></span><div><small>Right now</small><b>Nothing scheduled</b></div>`;
 }
 function renderStats(){
-  const all=allTasks();let plan=0,done=0;
-  all.forEach(t=>{if(t.cat==="study"){const h=(t.e-t.s)/60;plan+=h;if(st.checks[t.id])done+=h}});
+  let plan=0,done=0,count=0,cl=0;
+  DAYS.forEach(d=>st.tasks[d].forEach(t=>{count++;if(t.cat==="class"||t.cat==="lab")cl++;
+    if(t.cat==="study"){const h=(t.e-t.s)/60;plan+=h;if(isChecked(d,t))done+=h}}));
   $("sHours").textContent=fmtN(plan)+" hrs";
-  $("sTasks").textContent=all.length;
-  $("sClass").textContent=all.filter(t=>t.cat==="class"||t.cat==="lab").length;
-  $("sGym").textContent=all.filter(t=>t.cat==="gym").length;
+  $("sTasks").textContent=count;
+  $("sClass").textContent=cl;
+  const sk=streakNow();if(sk>st.best){st.best=sk;save()}
+  $("sStreak").textContent=sk+(sk===1?" day":" days");
+  $("sStreakSub").textContent="Day streak · best "+st.best;
+  $("sStreak").closest(".stat").classList.toggle("hot",sk>0);
   $("progressText").textContent=`${fmtN(done)} of ${fmtN(plan)} study hours checked off`;
   $("progressBar").style.width=(plan?done/plan*100:0)+"%";
 }
 function render(){
-  DAYS.forEach(sortDay);
+  DAYS.forEach(sortDay);syncToday();
   const list=view==="all"?DAYS:[view],g=$("schedule");
   $("welcome").hidden=allTasks().length>0;
   g.className="grid"+(view==="all"?"":" single");
   g.innerHTML=list.map(d=>{
     const cur=curTask(d);let plan=0,done=0;
-    st.tasks[d].forEach(t=>{if(t.cat==="study"){const h=(t.e-t.s)/60;plan+=h;if(st.checks[t.id])done+=h}});
+    st.tasks[d].forEach(t=>{if(t.cat==="study"){const h=(t.e-t.s)/60;plan+=h;if(isChecked(d,t))done+=h}});
     const pct=plan?Math.min(100,done/plan*100):0,tot=st.tasks[d].reduce((a,t)=>a+t.e-t.s,0),fin=dayDone(d);
     const rows=st.tasks[d].map(t=>{
-      const on=!!st.checks[t.id],miss=isMissed(d,t);
-      return `<li class="ev ${t.cat}${on?" done":""}${cur&&cur.id===t.id?" now":""}${miss?" missed":""}">
+      const on=isChecked(d,t),miss=isMissed(d,t),lock=lockMsg(d,t);
+      return `<li class="ev ${t.cat}${on?" done":""}${cur&&cur.id===t.id?" now":""}${miss?" missed":""}${lock?" locked":""}" data-id="${t.id}" data-day="${d}" data-lock="${esc(lock)}">
         <span class="time">${range(t).replace("–","–<wbr>")}</span>
-        <label><input type="checkbox" data-id="${t.id}" data-day="${d}"${on?" checked":""}>
+        <label title="${esc(on?(lock?"Completed and locked":"Completed"):(lock||"Tick when done"))}"><input type="checkbox" data-id="${t.id}" data-day="${d}"${on?" checked":""}${lock?" disabled":""}>
           <span class="txt"><b>${esc(t.title)}</b>${t.note?`<small>${esc(t.note)}</small>`:""}</span>
           <span class="tag${miss?" miss":""}">${miss?"Missed":CATS[t.cat]}</span></label>
         <button class="edit" data-edit="${t.id}" data-day="${d}" aria-label="Edit ${esc(t.title)}">✎</button></li>`}).join("")
@@ -363,18 +374,46 @@ function render(){
       <div class="ring" style="--p:${pct}" title="${Math.round(pct)}% of study done"><b>${Math.round(pct)}%</b></div></div></header>
       <ul>${rows}</ul></article>`}).join("");
   renderTabs();renderNow();renderStats();renderTypes();
-  missSet=new Set(allTasks().filter(t=>DAYS.some(d=>st.tasks[d].includes(t)&&isMissed(d,t))).map(t=>t.id));
+  missSet=new Set(DAYS.flatMap(d=>st.tasks[d].filter(t=>isMissed(d,t)).map(t=>t.id)));
 }
 
 /* Time helpers, missed tasks, day completion */
 const fmtD=m=>{const h=Math.floor(m/60),r=Math.round(m%60);return h?(r?h+"h "+r+"m":h+"h"):r+"m"};
-const MAIN=["study","class","lab","gym"];
+const dk=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+function dateOf(day){const n=new Date();return dk(new Date(n.getFullYear(),n.getMonth(),n.getDate()-((n.getDay()+6)%7)+DAYS.indexOf(day)))}
+const isChecked=(d,t)=>st.checks[t.id]===dateOf(d);
+const canTick=(d,t)=>d===todayName&&nowMins()>=t.s&&nowMins()<=t.e+30;
+function lockMsg(d,t){
+  if(canTick(d,t))return "";
+  const di=DAYS.indexOf(d),ti=DAYS.indexOf(todayName);
+  if(di>ti)return "You can't tick tasks for a future day.";
+  if(di<ti)return "This day has passed, so its tasks are locked.";
+  if(nowMins()<t.s)return "Not yet. You can tick this from "+fmtT(t.s)+" until "+fmtT(Math.min(t.e+30,1439))+".";
+  return "Too late. Tasks can only be ticked until 30 minutes after they end.";
+}
+const isFuture=(d,t)=>{const di=DAYS.indexOf(d),ti=DAYS.indexOf(todayName);return di>ti||(di===ti&&t.s>nowMins())};
+function streakNow(){
+  let n=0;const b=new Date();
+  for(let i=0;i<400;i++){
+    const d=new Date(b.getFullYear(),b.getMonth(),b.getDate()-i),k=dk(d),name=DAYS[(d.getDay()+6)%7];
+    if(st.history[k]){n++;continue}
+    if(!st.tasks[name].length)continue;
+    if(i===0&&!st.tasks[todayName].some(t=>isMissed(todayName,t)))continue;
+    break;
+  }
+  return n;
+}
+function syncToday(){
+  const k=dk(new Date()),ok=dayDone(todayName);
+  if(ok&&!st.history[k]){st.history[k]=true;save()}
+  else if(!ok&&st.history[k]){delete st.history[k];save()}
+}
 function isMissed(d,t){
-  if(st.checks[t.id])return false;
+  if(isChecked(d,t))return false;
   const di=DAYS.indexOf(d),ti=DAYS.indexOf(todayName);
   return di<ti||(di===ti&&nowMins()>t.e+30);
 }
-function dayDone(d){const m=st.tasks[d].filter(t=>MAIN.includes(t.cat));return m.length>0&&m.every(t=>st.checks[t.id])}
+function dayDone(d){const m=st.tasks[d];return m.length>0&&m.every(t=>isChecked(d,t))}
 function renderTypes(){
   const list=view==="all"?DAYS:[view],tot={};
   Object.keys(CATS).forEach(k=>tot[k]=0);
@@ -434,7 +473,7 @@ function celebrate(day){
   const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
   if(card){card.classList.add("pop");
     if(!reduce){const r=card.getBoundingClientRect();confetti(r.left+r.width/2,Math.min(Math.max(r.top+40,90),innerHeight*.5))}}
-  toast("Day complete! Nice work, "+day+" is done.",4500);
+  {const sk=streakNow();toast("Day complete! "+(sk>1?sk+"-day streak. ":"")+"Nice work.",4500)}
   cue("win");
 }
 
@@ -476,6 +515,8 @@ $("tmReset").onclick=()=>tmSet(tmMode);
 $("tmModes").onclick=e=>{const b=e.target.closest("button");if(b)tmSet(b.dataset.m)};
 $("tmMin").onchange=()=>{const v=Math.round(+$("tmMin").value);if(v>=1&&v<=180){tmCfg[tmMode]=v;saveTm();tmSet(tmMode)}else tmShow()};
 function tick(){
+  const nt=DAYS[(new Date().getDay()+6)%7];
+  if(nt!==todayName){todayName=nt;if(view!=="all"&&!$("dlg").open)view=nt;render()}
   $("clockT").textContent=new Date().toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});
   if(tmRun){if(Date.now()>=tmEnd)tmDone();else{if(Math.ceil((tmEnd-Date.now())/1000)<=5)cue("tick");tmShow()}}
 }
@@ -491,7 +532,10 @@ function hint(err){
   if(e>s){const o=st.tasks[ed.day].find(t=>t.id!==ed.id&&t.s<e&&t.e>s);if(o)m="Overlaps with “"+o.title+"” ("+range(o)+")."}
   h.textContent=m;
 }
+function warnMsg(m){const h=$("hint");h.className="msg";h.textContent=m;cue("error")}
+let armSave=false;
 function openEd(day,id){
+  armSave=false;$("saveBtn").textContent="Save";
   const t=id?st.tasks[day].find(x=>x.id===id):null;
   ed={day,id:t?t.id:null};
   $("dTitle").textContent=t?"Edit task · "+day:"Add task · "+day;
@@ -508,6 +552,11 @@ function saveEd(){
   if(!title)return hint("Please add a title.");
   if(isNaN(s)||isNaN(e))return hint("Please set a start and end time.");
   if(!(e>s))return hint("The end time must be after the start time.");
+  if(ed.id&&!armSave){
+    const old=st.tasks[ed.day].find(x=>x.id===ed.id);
+    if(old&&isFuture(ed.day,old)){armSave=true;$("saveBtn").textContent="Save anyway";
+      return warnMsg("Heads up: this task is in the future. Changing it changes what you must finish to keep your streak. Tap Save anyway to confirm.")}
+  }
   const base={title,s,e,cat:$("fCat").value,note:$("fNote").value.trim()};
   if(ed.id)Object.assign(st.tasks[ed.day].find(x=>x.id===ed.id),base);
   else st.tasks[ed.day].push({id:uid(),...base});
@@ -519,18 +568,31 @@ $("cancelBtn").onclick=()=>$("dlg").close();
 $("fS").oninput=$("fE").oninput=()=>hint();
 $("dlg").addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.tagName==="INPUT"){e.preventDefault();saveEd()}});
 $("chips").onclick=e=>{const c=e.target.closest(".chip");if(c)c.setAttribute("aria-pressed",c.getAttribute("aria-pressed")!=="true")};
-$("delBtn").onclick=function(){tapTwice(this,"Delete",()=>{
-  st.tasks[ed.day]=st.tasks[ed.day].filter(x=>x.id!==ed.id);delete st.checks[ed.id];save();$("dlg").close();render();cue("delete")})};
-$("dlg").addEventListener("close",()=>{const b=$("delBtn");clearTimeout(b._t);b._t=0;b.textContent="Delete";b.classList.remove("warn")});
+$("delBtn").onclick=function(){
+  const t=st.tasks[ed.day].find(x=>x.id===ed.id);
+  if(t&&isFuture(ed.day,t)&&!this._t)warnMsg("Heads up: this task is in the future. Removing it changes what you must finish to keep your streak. Tap again to delete.");
+  tapTwice(this,"Delete",()=>{
+    st.tasks[ed.day]=st.tasks[ed.day].filter(x=>x.id!==ed.id);delete st.checks[ed.id];save();$("dlg").close();render();cue("delete")});
+};
+$("dlg").addEventListener("close",()=>{armSave=false;$("saveBtn").textContent="Save";const b=$("delBtn");clearTimeout(b._t);b._t=0;b.textContent="Delete";b.classList.remove("warn")});
 
 /* Page events */
 $("schedule").addEventListener("change",e=>{
-  if(e.target.matches("input[data-id]")){
-    const d=e.target.dataset.day,was=dayDone(d);
-    st.checks[e.target.dataset.id]=e.target.checked;save();render();
-    if(!was&&dayDone(d))celebrate(d);else cue(e.target.checked?"check":"uncheck");
-  }});
+  if(!e.target.matches("input[data-id]"))return;
+  const d=e.target.dataset.day,id=e.target.dataset.id,t=st.tasks[d].find(x=>x.id===id);
+  if(!t||!canTick(d,t)){render();toast(t?lockMsg(d,t):"Task not found",3500);cue("error");return}
+  const was=dayDone(d);
+  if(e.target.checked)st.checks[id]=dateOf(d);else delete st.checks[id];
+  save();render();
+  if(!was&&dayDone(d))celebrate(d);else cue(e.target.checked?"check":"uncheck");
+});
 $("schedule").addEventListener("click",e=>{
+  const lk=e.target.closest(".ev.locked label");
+  if(lk){
+    const li=lk.closest(".ev"),d=li.dataset.day,t=st.tasks[d].find(x=>x.id===li.dataset.id);
+    if(t){const m=lockMsg(d,t);if(m){toast(isChecked(d,t)?"Completed. Ticks lock 30 minutes after a task ends.":m,3500);cue("error")}else render()}
+    return;
+  }
   const ed1=e.target.closest("[data-edit]"),ad=e.target.closest("[data-add]");
   if(ed1)openEd(ed1.dataset.day,ed1.dataset.edit);else if(ad)openEd(ad.dataset.add,null)});
 $("tabs").addEventListener("click",e=>{const b=e.target.closest(".tab");if(b){view=b.dataset.v;render()}});
@@ -552,7 +614,7 @@ $("wSample").onclick=()=>{
 const closeMenu=()=>$("menu").open=false;
 $("backupBtn").onclick=()=>{
   closeMenu();
-  const b=new Blob([JSON.stringify({app:"weekly-planner",v:1,tasks:st.tasks,checks:st.checks},null,1)],{type:"application/json"});
+  const b=new Blob([JSON.stringify({app:"weekly-planner",v:1,tasks:st.tasks,checks:st.checks,history:st.history,best:st.best},null,1)],{type:"application/json"});
   const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="weekly-planner-backup.json";
   document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
   toast("Backup downloaded");
@@ -566,8 +628,7 @@ $("file").onchange=e=>{
     $("file").value=""};
   r.readAsText(f);
 };
-$("resetBtn").onclick=function(){tapTwice(this,"Reset checkmarks",()=>{st.checks={};save();render();closeMenu();toast("Checkmarks cleared")})};
-$("clearBtn").onclick=function(){tapTwice(this,"Clear all tasks",()=>{st=blank();save();render();closeMenu();cue("delete");toast("Planner cleared")})};
+$("clearBtn").onclick=function(){tapTwice(this,"Clear all tasks",()=>{st=Object.assign(blank(),{history:st.history,best:st.best});save();render();closeMenu();cue("delete");toast("Planner cleared")})};
 document.addEventListener("click",e=>{if(!e.target.closest("#menu"))closeMenu()});
 
 /* Cursor-reactive background and box glow */
