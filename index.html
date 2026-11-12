@@ -110,6 +110,7 @@ dialog h3{margin:0 0 14px;font-size:18px}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chip{padding:6px 11px;border-radius:20px;border:1px solid var(--line);font-size:12px;font-weight:600;color:var(--muted)}
 .chip[aria-pressed=true]{background:#5b63d633;border-color:#7c6cff;color:#fff}
+.nTxt{margin:0 0 18px;color:var(--muted);font-size:14px}
 .msg{min-height:18px;font-size:12px;margin:0 0 10px;color:#ffb44f}
 .msg.err{color:#ff8da6}
 .dact{display:flex;gap:8px;justify-content:flex-end;align-items:center}
@@ -278,6 +279,11 @@ body{background:#fff}h1{background:none;color:#111}
     <button class="btn" id="cancelBtn">Cancel</button>
     <button class="btn primary" id="saveBtn">Save</button>
   </div>
+</dialog>
+<dialog id="nDlg">
+  <h3>Get a notification when each task starts?</h3>
+  <p class="nTxt">The planner can send a message to this device when each task begins, so you always know what is happening now. It works while the app is open or running in the background. You can change this any time under Data.</p>
+  <div class="dact"><button class="btn" id="nNo">Not now</button><button class="btn primary" id="nYes">Enable notifications</button></div>
 </dialog>
 <canvas id="fx" aria-hidden="true"></canvas>
 <div class="toast" id="toast" hidden></div>
@@ -680,9 +686,7 @@ function checkNotify(){
   if(fresh){Object.keys(sent).forEach(x=>{if(x.slice(0,10)!==k)delete sent[x]});try{localStorage.setItem(NKEY,JSON.stringify(sent))}catch(e){}}
 }
 const notifyLabel=()=>$("notifyBtn").textContent="Notifications: "+(notifyOn?"On":"Off");
-$("notifyBtn").onclick=async()=>{
-  closeMenu();
-  if(notifyOn){notifyOn=false;try{localStorage.setItem("weeklyPlannerNotify","0")}catch(e){}notifyLabel();toast("Notifications off");return}
+async function enableNotify(){
   if(typeof Notification==="undefined"){toast("This browser does not support notifications.",4500);return}
   let p=Notification.permission;
   if(p==="default"){try{p=await Notification.requestPermission()}catch(e){}}
@@ -690,7 +694,22 @@ $("notifyBtn").onclick=async()=>{
     notifyOn=true;try{localStorage.setItem("weeklyPlannerNotify","1")}catch(e){}
     notifyLabel();pushNote("Notifications are on","You will get a message when each task starts.","test");toast("Notifications on");
   }else toast("Notifications are blocked. Allow them in your browser or phone settings.",5000);
+}
+$("notifyBtn").onclick=()=>{
+  closeMenu();
+  if(notifyOn){notifyOn=false;try{localStorage.setItem("weeklyPlannerNotify","0")}catch(e){}notifyLabel();toast("Notifications off")}
+  else enableNotify();
 };
+/* First visit: ask once whether to turn notifications on */
+const ASKED="weeklyPlannerNotifyAsked";
+function maybeAsk(){
+  let asked;try{asked=localStorage.getItem(ASKED)}catch(e){return}
+  if(asked||typeof Notification==="undefined"||Notification.permission!=="default")return;
+  setTimeout(()=>{if(!$("dlg").open&&!$("nDlg").open)$("nDlg").showModal()},900);
+}
+$("nDlg").addEventListener("close",()=>{try{localStorage.setItem(ASKED,"1")}catch(e){}});
+$("nYes").onclick=()=>{$("nDlg").close();enableNotify()};
+$("nNo").onclick=()=>{$("nDlg").close();toast("You can turn notifications on later under Data.",4000)};
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkNotify()});
 
 const sndLabel=()=>$("sndBtn").textContent="Sounds: "+["Off","Soft","Normal"][snd];
@@ -698,7 +717,7 @@ $("sndBtn").onclick=()=>{snd=(snd+1)%3;try{localStorage.setItem("weeklyPlannerSo
 sndLabel();notifyLabel();tmShow();tick();setInterval(tick,1000);
 $("todayLabel").textContent=new Date().toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"});
 setInterval(()=>{if(!$("dlg").open){const prev=missSet;render();if(prev&&[...missSet].some(id=>!prev.has(id)))cue("miss")}},30000);
-render();
+render();maybeAsk();
 if("serviceWorker" in navigator){addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}
 </script>
 </body>
