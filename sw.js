@@ -1,5 +1,5 @@
 // Bump this number whenever you update index.html so phones refresh their saved copy.
-const CACHE = "weekly-planner-v8";
+const CACHE = "weekly-planner-v9";
 const FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 
 self.addEventListener("install", e => {
