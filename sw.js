@@ -1,5 +1,5 @@
 // Bump this number whenever you update index.html so phones refresh their saved copy.
-const CACHE = "weekly-planner-v5";
+const CACHE = "weekly-planner-v6";
 const FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 
 self.addEventListener("install", e => {
@@ -26,5 +26,16 @@ self.addEventListener("fetch", e => {
         return res;
       })
       .catch(() => caches.match(req).then(hit => hit || caches.match("./index.html")))
+  );
+});
+
+// Tapping a notification opens (or returns to) the planner.
+self.addEventListener("notificationclick", e => {
+  e.notification.close();
+  e.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then(list => {
+      for (const c of list) { if ("focus" in c) return c.focus(); }
+      return clients.openWindow("./");
+    })
   );
 });
