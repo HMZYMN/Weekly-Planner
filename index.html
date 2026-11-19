@@ -7,40 +7,56 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<meta name="theme-color" content="#2a211a">
+<meta name="theme-color" content="#e1f2fe">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Planner">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-<script>try{var _t=localStorage.getItem("weeklyPlannerTheme");document.documentElement.dataset.theme=_t==="light"?"light":"dark"}catch(e){document.documentElement.dataset.theme="dark"}</script>
+<script>try{var _t=localStorage.getItem("weeklyPlannerTheme");document.documentElement.dataset.theme=_t==="light"||_t==="dark"?_t:(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")}catch(e){document.documentElement.dataset.theme="light"}</script>
 <style>
 html{background:var(--bg)}
-/* Palette: 98d2eb sky blue, e1f2fe alice blue, b2b1cf periwinkle, 77625c taupe grey, 49392c taupe */
-:root,:root[data-theme="dark"]{
-color-scheme:dark;
---bg:#2a211a;--surface:#352a21;--surface2:#49392c;--line:#5d4b3e;--line-strong:#77625c;
---ink:#e1f2fe;--ink-soft:#c8dbe8;--muted:#b2b1cf;--muted2:#8d8590;--track:#5a483b;
---accent:#98d2eb;--accent-strong:#98d2eb;--accent2:#b2b1cf;--sky:#98d2eb;--peri:#b2b1cf;
---study:#b2b1cf;--class:#98d2eb;--lab:#E0A184;--gym:#D69BB5;--travel:#A8938C;--personal:#8CC4AE;--ok:#8CC4AE;
---miss:#EE8E8E;--miss-text:#a8908f;--warn:#E6C98F;--hot:#EE9A6B;
---grad:linear-gradient(135deg,#98d2eb,#b2b1cf);--grad-bar:linear-gradient(90deg,#98d2eb,#b2b1cf);--on-accent:#3a2d22;
---hover:#ffffff0d;--hover2:#ffffff17;--tint:#ffffff08;--tick:#2a211a;
---shadow-c:#000a;--backdrop:#1c1510cc;--glow1:#98d2eb3a;--glow2:#b2b1cf2a;
---page-bg:radial-gradient(900px 520px at 6% -8%,#98d2eb2a,transparent 70%),radial-gradient(760px 460px at 100% 0,#b2b1cf26,transparent 70%),radial-gradient(900px 520px at 50% 118%,#77625c55,transparent 70%),#2a211a;
---h1-grad:linear-gradient(100deg,#e1f2fe,#98d2eb 55%,#b2b1cf)}
-:root[data-theme="light"]{
+/* Theme tokens: light by default, dark when the system prefers it, and a manual toggle (data-theme) that overrides both */
+:root,:root[data-theme="light"]{
 color-scheme:light;
---bg:#e1f2fe;--surface:#f5fbff;--surface2:#eaf6ff;--line:#bcdcee;--line-strong:#8fb9d3;
---ink:#49392c;--ink-soft:#5f4d42;--muted:#6f5b55;--muted2:#9a8d8a;--track:#c9e2f1;
---accent:#98d2eb;--accent-strong:#5aa3c8;--accent2:#b2b1cf;--sky:#98d2eb;--peri:#b2b1cf;
+--bg:#e1f2fe;--surface:#ffffff;--border:#b2b1cf;--text:#49392c;--text-muted:#77625c;--accent:#98d2eb;--accent-2:#b2b1cf;
+--surface2:#f1f8fe;--line:var(--border);--line-strong:#9a99bd;
+--ink:var(--text);--ink-soft:#5f4d42;--muted:var(--text-muted);--muted2:#9a8d8a;--track:#d3d2e4;
+--accent-strong:#5aa3c8;--accent2:var(--accent-2);
 --study:#6a68a3;--class:#2f81a8;--lab:#a85e3c;--gym:#9a5578;--travel:#77625c;--personal:#3c7a66;--ok:#3c7a66;
 --miss:#b3403f;--miss-text:#9a8283;--warn:#8a5a00;--hot:#c0532b;
 --grad:linear-gradient(135deg,#98d2eb,#b2b1cf);--grad-bar:linear-gradient(90deg,#98d2eb,#b2b1cf);--on-accent:#3a2d22;
---hover:#49392c0d;--hover2:#49392c17;--tint:#98d2eb22;--tick:#f5fbff;
+--hover:#49392c0d;--hover2:#49392c17;--tint:#98d2eb22;--tick:#ffffff;
 --shadow-c:#49392c33;--backdrop:#49392c88;--glow1:#98d2eb77;--glow2:#b2b1cf66;
 --page-bg:radial-gradient(900px 520px at 6% -8%,#98d2eb99,transparent 70%),radial-gradient(760px 460px at 100% 0,#b2b1cf66,transparent 70%),radial-gradient(900px 520px at 50% 118%,#77625c22,transparent 70%),#e1f2fe;
 --h1-grad:linear-gradient(100deg,#49392c,#77625c 55%,#5f7fa8)}
+@media (prefers-color-scheme: dark){
+:root:not([data-theme]){
+color-scheme:dark;
+--bg:#17120e;--surface:#241c16;--border:#49392c;--text:#e1f2fe;--text-muted:#a8958d;--accent:#98d2eb;--accent-2:#b2b1cf;
+--surface2:#2e241c;--line:var(--border);--line-strong:#6a574b;
+--ink:var(--text);--ink-soft:#c8dbe8;--muted:var(--text-muted);--muted2:#7d6f69;--track:#3a2d23;
+--accent-strong:#98d2eb;--accent2:var(--accent-2);
+--study:#b2b1cf;--class:#98d2eb;--lab:#E0A184;--gym:#D69BB5;--travel:#A8938C;--personal:#8CC4AE;--ok:#8CC4AE;
+--miss:#EE8E8E;--miss-text:#a8908f;--warn:#E6C98F;--hot:#EE9A6B;
+--grad:linear-gradient(135deg,#98d2eb,#b2b1cf);--grad-bar:linear-gradient(90deg,#98d2eb,#b2b1cf);--on-accent:#3a2d22;
+--hover:#ffffff0d;--hover2:#ffffff17;--tint:#ffffff08;--tick:#17120e;
+--shadow-c:#000a;--backdrop:#0c0907cc;--glow1:#98d2eb3a;--glow2:#b2b1cf2a;
+--page-bg:radial-gradient(900px 520px at 6% -8%,#98d2eb26,transparent 70%),radial-gradient(760px 460px at 100% 0,#b2b1cf22,transparent 70%),radial-gradient(900px 520px at 50% 118%,#49392c88,transparent 70%),#17120e;
+--h1-grad:linear-gradient(100deg,#e1f2fe,#98d2eb 55%,#b2b1cf)}}
+:root[data-theme="dark"]{
+color-scheme:dark;
+--bg:#17120e;--surface:#241c16;--border:#49392c;--text:#e1f2fe;--text-muted:#a8958d;--accent:#98d2eb;--accent-2:#b2b1cf;
+--surface2:#2e241c;--line:var(--border);--line-strong:#6a574b;
+--ink:var(--text);--ink-soft:#c8dbe8;--muted:var(--text-muted);--muted2:#7d6f69;--track:#3a2d23;
+--accent-strong:#98d2eb;--accent2:var(--accent-2);
+--study:#b2b1cf;--class:#98d2eb;--lab:#E0A184;--gym:#D69BB5;--travel:#A8938C;--personal:#8CC4AE;--ok:#8CC4AE;
+--miss:#EE8E8E;--miss-text:#a8908f;--warn:#E6C98F;--hot:#EE9A6B;
+--grad:linear-gradient(135deg,#98d2eb,#b2b1cf);--grad-bar:linear-gradient(90deg,#98d2eb,#b2b1cf);--on-accent:#3a2d22;
+--hover:#ffffff0d;--hover2:#ffffff17;--tint:#ffffff08;--tick:#17120e;
+--shadow-c:#000a;--backdrop:#0c0907cc;--glow1:#98d2eb3a;--glow2:#b2b1cf2a;
+--page-bg:radial-gradient(900px 520px at 6% -8%,#98d2eb26,transparent 70%),radial-gradient(760px 460px at 100% 0,#b2b1cf22,transparent 70%),radial-gradient(900px 520px at 50% 118%,#49392c88,transparent 70%),#17120e;
+--h1-grad:linear-gradient(100deg,#e1f2fe,#98d2eb 55%,#b2b1cf)}
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 html{height:auto;scroll-padding-top:env(safe-area-inset-top,0px)}
 *,*::before,*::after{box-sizing:inherit}
@@ -745,12 +761,13 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkNotif
 const htmlEl=document.documentElement;
 function applyTheme(t,save){
   htmlEl.dataset.theme=t;
-  const m=document.querySelector('meta[name="theme-color"]');if(m)m.content=t==="light"?"#e1f2fe":"#2a211a";
+  const m=document.querySelector('meta[name="theme-color"]');if(m)m.content=t==="light"?"#e1f2fe":"#17120e";
   $("themeBtn").setAttribute("aria-label",t==="light"?"Switch to dark theme":"Switch to light theme");
   if(save){try{localStorage.setItem("weeklyPlannerTheme",t)}catch(e){}}
 }
 $("themeBtn").onclick=()=>applyTheme(htmlEl.dataset.theme==="light"?"dark":"light",true);
 applyTheme(htmlEl.dataset.theme==="light"?"light":"dark",false);
+try{matchMedia("(prefers-color-scheme: dark)").addEventListener("change",e=>{let saved=null;try{saved=localStorage.getItem("weeklyPlannerTheme")}catch(x){}if(!saved)applyTheme(e.matches?"dark":"light",false)})}catch(e){}
 let printTheme=null;
 addEventListener("beforeprint",()=>{printTheme=htmlEl.dataset.theme;htmlEl.dataset.theme="light"});
 addEventListener("afterprint",()=>{if(printTheme)htmlEl.dataset.theme=printTheme;printTheme=null});
