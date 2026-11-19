@@ -7,7 +7,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<meta name="theme-color" content="#1b2120">
+<meta name="theme-color" content="#2a211a">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Planner">
@@ -16,30 +16,31 @@
 <script>try{var _t=localStorage.getItem("weeklyPlannerTheme");document.documentElement.dataset.theme=_t==="light"?"light":"dark"}catch(e){document.documentElement.dataset.theme="dark"}</script>
 <style>
 html{background:var(--bg)}
+/* Palette: 98d2eb sky blue, e1f2fe alice blue, b2b1cf periwinkle, 77625c taupe grey, 49392c taupe */
 :root,:root[data-theme="dark"]{
 color-scheme:dark;
---bg:#1b2120;--surface:#262f2e;--surface2:#343E3D;--line:#455250;--line-strong:#5a6966;
---ink:#F4ECDA;--ink-soft:#DCD2BC;--muted:#B9AD90;--muted2:#818B86;--track:#43504e;
---accent:#AB92BF;--accent-strong:#AB92BF;--accent2:#E83151;--sand:#E1CA96;--deep:#440D0F;
---study:#AB92BF;--class:#E1CA96;--lab:#E83151;--gym:#C56C9A;--travel:#8E9A96;--personal:#8FB3A3;--ok:#8FB3A3;
---miss:#F0627B;--miss-text:#A68A8E;--warn:#E1CA96;--hot:#E83151;
---grad:linear-gradient(135deg,#8a6aa6,#E83151);--grad-bar:linear-gradient(90deg,#AB92BF,#E83151);--on-accent:#fff;
---hover:#ffffff0d;--hover2:#ffffff17;--tint:#ffffff08;--tick:#1b2120;
---shadow-c:#000a;--backdrop:#000b;--glow1:#AB92BF3d;--glow2:#E8315124;
---page-bg:radial-gradient(900px 520px at 6% -8%,#AB92BF2e,transparent 70%),radial-gradient(760px 460px at 100% 0,#E831512a,transparent 70%),radial-gradient(900px 520px at 50% 118%,#440D0F,transparent 70%),#1b2120;
---h1-grad:linear-gradient(100deg,#F4ECDA,#E1CA96 55%,#AB92BF)}
+--bg:#2a211a;--surface:#352a21;--surface2:#49392c;--line:#5d4b3e;--line-strong:#77625c;
+--ink:#e1f2fe;--ink-soft:#c8dbe8;--muted:#b2b1cf;--muted2:#8d8590;--track:#5a483b;
+--accent:#98d2eb;--accent-strong:#98d2eb;--accent2:#b2b1cf;--sky:#98d2eb;--peri:#b2b1cf;
+--study:#b2b1cf;--class:#98d2eb;--lab:#E0A184;--gym:#D69BB5;--travel:#A8938C;--personal:#8CC4AE;--ok:#8CC4AE;
+--miss:#EE8E8E;--miss-text:#a8908f;--warn:#E6C98F;--hot:#EE9A6B;
+--grad:linear-gradient(135deg,#98d2eb,#b2b1cf);--grad-bar:linear-gradient(90deg,#98d2eb,#b2b1cf);--on-accent:#3a2d22;
+--hover:#ffffff0d;--hover2:#ffffff17;--tint:#ffffff08;--tick:#2a211a;
+--shadow-c:#000a;--backdrop:#1c1510cc;--glow1:#98d2eb3a;--glow2:#b2b1cf2a;
+--page-bg:radial-gradient(900px 520px at 6% -8%,#98d2eb2a,transparent 70%),radial-gradient(760px 460px at 100% 0,#b2b1cf26,transparent 70%),radial-gradient(900px 520px at 50% 118%,#77625c55,transparent 70%),#2a211a;
+--h1-grad:linear-gradient(100deg,#e1f2fe,#98d2eb 55%,#b2b1cf)}
 :root[data-theme="light"]{
 color-scheme:light;
---bg:#F6EFDF;--surface:#FFFBF2;--surface2:#FBF3E1;--line:#E1CA96;--line-strong:#C9AE6E;
---ink:#343E3D;--ink-soft:#4B5755;--muted:#626A62;--muted2:#9A9F95;--track:#EADCB6;
---accent:#AB92BF;--accent-strong:#8C6AA8;--accent2:#E83151;--sand:#E1CA96;--deep:#440D0F;
---study:#7D5F9B;--class:#A5802F;--lab:#D4203F;--gym:#A8487A;--travel:#5F6C68;--personal:#3F7560;--ok:#3F7560;
---miss:#C41E3D;--miss-text:#9B7F84;--warn:#8A5A00;--hot:#E83151;
---grad:linear-gradient(135deg,#8C6AA8,#E83151);--grad-bar:linear-gradient(90deg,#AB92BF,#E83151);--on-accent:#fff;
---hover:#440D0F0d;--hover2:#440D0F17;--tint:#E1CA9633;--tick:#FFFBF2;
---shadow-c:#440D0F40;--backdrop:#343E3D99;--glow1:#AB92BF55;--glow2:#E8315122;
---page-bg:radial-gradient(900px 520px at 6% -8%,#E1CA96aa,transparent 70%),radial-gradient(760px 460px at 100% 0,#AB92BF55,transparent 70%),radial-gradient(900px 520px at 50% 118%,#E8315118,transparent 70%),#F6EFDF;
---h1-grad:linear-gradient(100deg,#440D0F,#E83151 70%)}
+--bg:#e1f2fe;--surface:#f5fbff;--surface2:#eaf6ff;--line:#bcdcee;--line-strong:#8fb9d3;
+--ink:#49392c;--ink-soft:#5f4d42;--muted:#6f5b55;--muted2:#9a8d8a;--track:#c9e2f1;
+--accent:#98d2eb;--accent-strong:#5aa3c8;--accent2:#b2b1cf;--sky:#98d2eb;--peri:#b2b1cf;
+--study:#6a68a3;--class:#2f81a8;--lab:#a85e3c;--gym:#9a5578;--travel:#77625c;--personal:#3c7a66;--ok:#3c7a66;
+--miss:#b3403f;--miss-text:#9a8283;--warn:#8a5a00;--hot:#c0532b;
+--grad:linear-gradient(135deg,#98d2eb,#b2b1cf);--grad-bar:linear-gradient(90deg,#98d2eb,#b2b1cf);--on-accent:#3a2d22;
+--hover:#49392c0d;--hover2:#49392c17;--tint:#98d2eb22;--tick:#f5fbff;
+--shadow-c:#49392c33;--backdrop:#49392c88;--glow1:#98d2eb77;--glow2:#b2b1cf66;
+--page-bg:radial-gradient(900px 520px at 6% -8%,#98d2eb99,transparent 70%),radial-gradient(760px 460px at 100% 0,#b2b1cf66,transparent 70%),radial-gradient(900px 520px at 50% 118%,#77625c22,transparent 70%),#e1f2fe;
+--h1-grad:linear-gradient(100deg,#49392c,#77625c 55%,#5f7fa8)}
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 html{height:auto;scroll-padding-top:env(safe-area-inset-top,0px)}
 *,*::before,*::after{box-sizing:inherit}
@@ -494,7 +495,7 @@ function cue(name){
 function confetti(x,y){
   const c=$("fx"),ctx=c.getContext("2d"),dpr=devicePixelRatio||1;
   c.width=innerWidth*dpr;c.height=innerHeight*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
-  const cols=["#AB92BF","#E83151","#E1CA96","#C56C9A","#8FB3A3"];
+  const cols=["#98d2eb","#b2b1cf","#77625c","#E6C98F","#D69BB5"];
   const ps=Array.from({length:120},()=>({x,y,vx:(Math.random()-.5)*15,vy:-Math.random()*13-4,w:5+Math.random()*6,h:3+Math.random()*5,r:Math.random()*6,vr:(Math.random()-.5)*.4,c:cols[Math.random()*5|0],l:0}));
   let t0=performance.now();
   (function f(t){
@@ -744,7 +745,7 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkNotif
 const htmlEl=document.documentElement;
 function applyTheme(t,save){
   htmlEl.dataset.theme=t;
-  const m=document.querySelector('meta[name="theme-color"]');if(m)m.content=t==="light"?"#F6EFDF":"#1b2120";
+  const m=document.querySelector('meta[name="theme-color"]');if(m)m.content=t==="light"?"#e1f2fe":"#2a211a";
   $("themeBtn").setAttribute("aria-label",t==="light"?"Switch to dark theme":"Switch to light theme");
   if(save){try{localStorage.setItem("weeklyPlannerTheme",t)}catch(e){}}
 }
