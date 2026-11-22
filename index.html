@@ -325,6 +325,25 @@ header.top{padding-top:24px}
 #aDlg .dact{flex-wrap:wrap}
 @media(max-width:720px){#acctLabel{display:none}.acct{padding:6px 10px}}
 @media print{.acct{display:none}}
+/* ===== Today button and show-password ===== */
+.navrow{display:flex;align-items:center;gap:10px;min-width:0;max-width:100%}
+.navrow .tabs{min-width:0}
+#todayBtn{flex:none}
+body.mode-timer #todayBtn{display:none}
+.card{scroll-margin-top:84px}
+.card.flash{animation:flash 1.4s ease}
+@keyframes flash{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent-strong) 75%,transparent)}35%{box-shadow:0 0 0 7px color-mix(in srgb,var(--accent-strong) 45%,transparent)}100%{box-shadow:0 0 0 2px color-mix(in srgb,var(--accent-strong) 50%,transparent),var(--sh2)}}
+.pw{position:relative}
+.pw input{padding-right:48px}
+.eye{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:9px;display:grid;place-items:center;color:var(--muted)}
+.eye:hover{color:var(--ink);background:var(--hover)}
+.eye svg{width:18px;height:18px}
+.eye .i-off{display:none}
+.eye[aria-pressed="true"] .i-on{display:none}
+.eye[aria-pressed="true"] .i-off{display:block}
+@media(max-width:820px){.navrow{flex:1 1 100%}}
+@media(prefers-reduced-motion:reduce){.card.flash{animation:none}}
+@media print{#todayBtn{display:none}}
 @media print{
 body{background:#fff}h1{background:none;color:#111}
 .toolbar,.now,.overall,.welcome,.tips,.add,.edit,.timer,#fx,.glow-bg,.themebtn,.foot,header.top,.topbar .mid,.topbar .right{display:none}
@@ -362,7 +381,10 @@ body{background:#fff}h1{background:none;color:#111}
 </section>
 
 <div class="toolbar">
+  <div class="navrow">
+  <button class="btn" id="todayBtn" type="button" title="Jump to today"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>Today</button>
   <div class="tabs" id="tabs" role="tablist" aria-label="Choose day"></div>
+  </div>
   <div class="actions">
     <button class="btn primary" id="addBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add task</button>
     <button class="btn" id="printBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V4h10v5M7 17H5a1 1 0 0 1-1-1v-5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v5a1 1 0 0 1-1 1h-2M7 14h10v6H7z"/></svg>Print</button>
@@ -447,7 +469,7 @@ body{background:#fff}h1{background:none;color:#111}
   <h3 id="aTitle">Sign in</h3>
   <p class="nTxt" id="aInfo"></p>
   <div class="f" id="aEmailF"><label for="aEmail">Email</label><input id="aEmail" type="email" autocomplete="email" inputmode="email"></div>
-  <div class="f" id="aPassF"><label for="aPass">Password</label><input id="aPass" type="password" autocomplete="current-password"></div>
+  <div class="f" id="aPassF"><label for="aPass">Password</label><div class="pw"><input id="aPass" type="password" autocomplete="current-password"><button type="button" class="eye" id="aEye" aria-label="Show password" aria-pressed="false" title="Show password"><svg class="i-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="i-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 6.2A10 10 0 0 1 12 6c6.4 0 10 6 10 6a17 17 0 0 1-3.2 3.9M6.6 7.5C4 9.2 2 12 2 12s3.6 6 10 6c1.5 0 2.9-.3 4.1-.8M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg></button></div></div>
   <p class="msg" id="aMsg"></p>
   <div class="dact">
     <button class="btn grow" id="aAlt" type="button"></button>
@@ -465,6 +487,18 @@ const $=id=>document.getElementById(id);
 /* White-label: change the name here (also update manifest.webmanifest and the <title>) */
 const BRAND={name:"Weekly Planner"};
 const IC={plus:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',edit:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"/></svg>'};
+function goToday(){
+  mode="plan";
+  if(view!=="all")view=todayName;
+  render();
+  requestAnimationFrame(()=>{
+    const card=document.querySelector('[data-card="'+todayName+'"]');
+    if(!card)return;
+    const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+    card.scrollIntoView({behavior:reduce?"auto":"smooth",block:"start"});
+    card.classList.remove("flash");void card.offsetWidth;card.classList.add("flash");
+  });
+}
 function setBrand(){document.title=BRAND.name;document.querySelectorAll(".brand-name").forEach(e=>e.textContent=BRAND.name);$("footBrand").textContent="© "+new Date().getFullYear()+" "+BRAND.name}
 function greet(){const h=new Date().getHours();$("greet").textContent=h<5?"Working late?":h<12?"Good morning":h<18?"Good afternoon":"Good evening"}
 const DAYS=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
@@ -782,6 +816,7 @@ $("schedule").addEventListener("click",e=>{
   }
   const ed1=e.target.closest("[data-edit]"),ad=e.target.closest("[data-add]");
   if(ed1)openEd(ed1.dataset.day,ed1.dataset.edit);else if(ad)openEd(ad.dataset.add,null)});
+$("todayBtn").onclick=goToday;
 $("modes").addEventListener("click",e=>{const b=e.target.closest("button");if(b){mode=b.dataset.mode;render()}});
 $("tabs").addEventListener("click",e=>{const b=e.target.closest(".tab");if(b){view=b.dataset.v;render()}});
 const addDay=()=>view==="all"?todayName:view;
@@ -993,6 +1028,16 @@ const AM={
   account:{t:"Your account",go:"Sync now",alt:"Sign out"},
   choose:{t:"Which plan do you want to keep?",i:"This device already has a plan, and your account has a different one saved. Choose the one to keep. The other will be replaced.",go:"Use my account's plan",alt:"Keep this device's plan",noclose:1}
 };
+function hidePw(){$("aPass").type="password";$("aEye").setAttribute("aria-pressed","false");$("aEye").setAttribute("aria-label","Show password");$("aEye").title="Show password"}
+$("aEye").onclick=()=>{
+  const show=$("aPass").type==="password";
+  $("aPass").type=show?"text":"password";
+  $("aEye").setAttribute("aria-pressed",show?"true":"false");
+  $("aEye").setAttribute("aria-label",show?"Hide password":"Show password");
+  $("aEye").title=show?"Hide password":"Show password";
+  $("aPass").focus();
+};
+$("aDlg").addEventListener("close",hidePw);
 function aMsg(m,ok){const e=$("aMsg");e.textContent=m;e.className="msg"+(ok?"":" err")}
 function aOpen(mode,info){
   aMode=mode;const m=AM[mode];
@@ -1004,7 +1049,7 @@ function aOpen(mode,info){
   $("aAlt").textContent=m.alt||"";$("aAlt").hidden=!m.alt;
   $("aLink").textContent=m.link||"";$("aLink").hidden=!m.link;
   $("aCancel").hidden=!!m.noclose;
-  aMsg("");
+  aMsg("");hidePw();
   if(!$("aDlg").open)$("aDlg").showModal();
   if(m.email)$("aEmail").focus();else if(m.pass)$("aPass").focus();
 }
