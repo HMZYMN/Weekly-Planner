@@ -1,5 +1,5 @@
 // Bump this number whenever you update index.html so phones refresh their saved copy.
-const CACHE = "weekly-planner-v14";
+const CACHE = "weekly-planner-v15";
 const FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 
 self.addEventListener("install", e => {
@@ -17,7 +17,10 @@ self.addEventListener("activate", e => {
 // Online: fetch the latest and save a copy. Offline: serve the saved copy.
 self.addEventListener("fetch", e => {
   const req = e.request;
-  if (req.method !== "GET" || !req.url.startsWith("http")) return;
+  const u = new URL(req.url);
+  // Only cache this site and the font/library hosts. Never cache login or database requests.
+  const ok = u.origin === location.origin || ["cdn.jsdelivr.net","fonts.googleapis.com","fonts.gstatic.com"].includes(u.hostname);
+  if (req.method !== "GET" || !ok) return;
   e.respondWith(
     fetch(req)
       .then(res => {

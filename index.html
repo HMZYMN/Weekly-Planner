@@ -311,6 +311,20 @@ header.top{padding-top:24px}
 #board.week .ev{padding-top:9px;padding-bottom:9px}
 @media(max-width:1020px){#board.week{grid-template-columns:repeat(2,minmax(0,1fr))}#board.week #types{grid-column:span 1}}
 @media(max-width:700px){#board.week{grid-template-columns:minmax(0,1fr)}}
+/* ===== Account ===== */
+.acct{padding:6px 12px;gap:8px}
+.acct svg{width:17px;height:17px}
+.av{width:26px;height:26px;border-radius:50%;background:var(--grad);color:var(--on-accent);display:grid;place-items:center;font-size:12px;font-weight:800}
+.sdot{width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 2px var(--surface)}
+.sdot.off{background:var(--warn)}
+.sdot.busy{background:var(--muted)}
+.alinks{text-align:center;margin-top:12px}
+.alinks:has(.link[hidden]){display:none}
+.link{color:var(--accent-strong);font-weight:600;font-size:13px;padding:6px 8px;border-radius:8px}
+.link:hover{text-decoration:underline}
+#aDlg .dact{flex-wrap:wrap}
+@media(max-width:720px){#acctLabel{display:none}.acct{padding:6px 10px}}
+@media print{.acct{display:none}}
 @media print{
 body{background:#fff}h1{background:none;color:#111}
 .toolbar,.now,.overall,.welcome,.tips,.add,.edit,.timer,#fx,.glow-bg,.themebtn,.foot,header.top,.topbar .mid,.topbar .right{display:none}
@@ -330,6 +344,7 @@ body{background:#fff}h1{background:none;color:#111}
     </div>
   </div>
   <div class="right"><div class="clock"><b id="clockT"></b></div>
+    <button class="btn acct" id="acctBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.6"/><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5"/></svg><span id="acctLabel">Sign in</span></button>
     <button class="btn themebtn" id="themeBtn" aria-label="Switch to light theme" title="Switch theme"><svg viewBox="0 0 24 24" aria-hidden="true" class="i-sun"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.3M12 19.2v2.3M2.5 12h2.3M19.2 12h2.3M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></svg><svg viewBox="0 0 24 24" aria-hidden="true" class="i-moon"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></svg></button>
   </div>
 </div></nav>
@@ -428,9 +443,23 @@ body{background:#fff}h1{background:none;color:#111}
   <p class="nTxt">The planner can send a message to this device when each task begins, so you always know what is happening now. It works while the app is open or running in the background. You can change this any time under Data.</p>
   <div class="dact"><button class="btn" id="nNo">Not now</button><button class="btn primary" id="nYes">Enable notifications</button></div>
 </dialog>
+<dialog id="aDlg">
+  <h3 id="aTitle">Sign in</h3>
+  <p class="nTxt" id="aInfo"></p>
+  <div class="f" id="aEmailF"><label for="aEmail">Email</label><input id="aEmail" type="email" autocomplete="email" inputmode="email"></div>
+  <div class="f" id="aPassF"><label for="aPass">Password</label><input id="aPass" type="password" autocomplete="current-password"></div>
+  <p class="msg" id="aMsg"></p>
+  <div class="dact">
+    <button class="btn grow" id="aAlt" type="button"></button>
+    <button class="btn" id="aCancel" type="button">Close</button>
+    <button class="btn primary" id="aGo" type="button">Continue</button>
+  </div>
+  <div class="alinks"><button class="link" id="aLink" type="button"></button></div>
+</dialog>
 <canvas id="fx" aria-hidden="true"></canvas>
 <div class="toast" id="toast" hidden></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 /* White-label: change the name here (also update manifest.webmanifest and the <title>) */
@@ -455,7 +484,8 @@ function clean(v){
   return o;
 }
 function load(){try{return clean(JSON.parse(localStorage.getItem(KEY)))||blank()}catch(e){return blank()}}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){toast("Could not save on this device")}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){toast("Could not save on this device")}
+  markDirty()}
 let st=load();
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const pad=n=>String(n).padStart(2,"0");
@@ -873,6 +903,168 @@ try{matchMedia("(prefers-color-scheme: dark)").addEventListener("change",e=>{let
 let printTheme=null;
 addEventListener("beforeprint",()=>{printTheme=htmlEl.dataset.theme;htmlEl.dataset.theme="light"});
 addEventListener("afterprint",()=>{if(printTheme)htmlEl.dataset.theme=printTheme;printTheme=null});
+
+/* Accounts and cloud sync (Supabase). The key below is the public (publishable) key; the database rules keep each person's plan private. */
+const SUPABASE_URL="https://vsmtdxrypkykpzkqwbpw.supabase.co";
+const SUPABASE_KEY="sb_publishable_t9H8jqy68qnr_uC5pFP6vQ_txcE0nzW";
+const OWNER="weeklyPlannerOwnerV1",DIRTY="weeklyPlannerDirtyV1";
+IC.user='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="3.6"/><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5"/></svg>';
+let sb=null,user=null,syncedFor=null,lastStamp="",pushing=false,pushT=0,ver=0,syncState="ok",syncText="",aMode="",pendingChoice=null;
+const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
+const lsSet=(k,v)=>{try{v===null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}};
+let dirty=lsGet(DIRTY)==="1";
+function setDirty(v){dirty=v;lsSet(DIRTY,v?"1":null)}
+function markDirty(){if(user){ver++;setDirty(true);clearTimeout(pushT);pushT=setTimeout(push,1500)}}
+function setStatus(state,text){syncState=state;syncText=text;updateAcct()}
+const cloudPayload=()=>({tasks:st.tasks,checks:st.checks,history:st.history,best:st.best});
+async function push(){
+  if(!sb||!user||pushing)return false;
+  pushing=true;const v0=ver;setStatus("busy","Syncing...");
+  try{
+    const {data,error}=await sb.from("plans").upsert({user_id:user.id,data:cloudPayload()},{onConflict:"user_id"}).select("updated_at").single();
+    if(error)throw error;
+    lastStamp=data.updated_at;
+    if(ver===v0){setDirty(false)}else{clearTimeout(pushT);pushT=setTimeout(push,300)}
+    setStatus("ok","All changes saved to your account.");return true;
+  }catch(e){setStatus("off","You appear to be offline. Changes will sync when you are back online.");return false}
+  finally{pushing=false}
+}
+async function fetchCloud(){
+  const {data,error}=await sb.from("plans").select("data,updated_at").eq("user_id",user.id).maybeSingle();
+  if(error)throw error;return data;
+}
+function adopt(c,stamp){st=c;if(stamp)lastStamp=stamp;lsSet(KEY,JSON.stringify(st));setDirty(false);render()}
+async function startSync(){
+  if(!sb||!user||syncedFor===user.id||pendingChoice)return;
+  const uid=user.id;setStatus("busy","Syncing...");
+  try{
+    const row=await fetchCloud(),owner=lsGet(OWNER);
+    if(owner&&owner!==uid){st=blank();lsSet(KEY,JSON.stringify(st));setDirty(false);render()}
+    const localHas=allTasks().length>0;
+    const cloud=row?clean(row.data):null,cloudHas=!!cloud&&DAYS.some(d=>cloud.tasks[d].length);
+    if(!row||(!cloudHas&&localHas)){await push()}
+    else if(!localHas||(owner===uid&&!dirty)){adopt(cloud,row.updated_at)}
+    else if(owner===uid){await push()}
+    else{pendingChoice={cloud,stamp:row.updated_at};aOpen("choose");return}
+    lsSet(OWNER,uid);syncedFor=uid;
+    if(!pushing&&syncState!=="off")setStatus("ok","All changes saved to your account.");
+  }catch(e){setStatus("off","Could not reach the server. Will try again.")}
+}
+async function pull(){
+  if(!sb||!user||syncedFor!==user.id||dirty||pushing)return;
+  try{
+    const row=await fetchCloud();
+    if(!row||row.updated_at===lastStamp)return;
+    const c=clean(row.data);
+    if(c&&!dirty&&!pushing){adopt(c,row.updated_at);setStatus("ok","All changes saved to your account.")}
+  }catch(e){}
+}
+const syncNow=()=>dirty?push():pull();
+function finishChoice(msg){lsSet(OWNER,user.id);syncedFor=user.id;pendingChoice=null;$("aDlg").close();toast(msg,4000)}
+async function signOutNow(){
+  if(dirty)await push();
+  await sb.auth.signOut();
+  lsSet(OWNER,null);setDirty(false);syncedFor=null;
+  st=blank();lsSet(KEY,JSON.stringify(st));
+  $("aDlg").close();render();toast("Signed out. This device's copy was cleared.",4000);
+}
+function onAuth(event,session){
+  user=session?session.user:null;
+  if(event==="PASSWORD_RECOVERY"){setTimeout(()=>aOpen("recovery"),0);return}
+  if(event==="SIGNED_OUT"){syncedFor=null;pendingChoice=null}
+  updateAcct();
+  if(user&&(event==="INITIAL_SESSION"||event==="SIGNED_IN"))setTimeout(startSync,0);
+}
+function updateAcct(){
+  const b=$("acctBtn");if(!b)return;
+  if(!sb||!user){b.innerHTML=IC.user+'<span id="acctLabel">Sign in</span>';b.title=sb?"Sign in to sync your plan":"Sign-in needs an internet connection";return}
+  b.innerHTML='<span class="av">'+esc((user.email||"?").charAt(0).toUpperCase())+'</span><span class="sdot '+syncState+'"></span>';
+  b.title=user.email+" · "+syncText;
+  if($("aDlg").open&&aMode==="account")$("aInfo").textContent=accountInfo();
+}
+const accountInfo=()=>"Signed in as "+user.email+". "+syncText+" Signing out removes the plan from this device, but it stays in your account.";
+
+/* Account window */
+const AM={
+  signin:{t:"Sign in",i:"Sign in to sync your plan across all your devices.",email:1,pass:1,go:"Sign in",alt:"Create account",link:"Forgot password?"},
+  signup:{t:"Create your account",i:"Your plan will sync across every device you sign in on. Use at least 8 characters for the password.",email:1,pass:1,go:"Create account",alt:"I have an account"},
+  forgot:{t:"Reset your password",i:"Enter your email and we will send you a link to choose a new password.",email:1,go:"Send reset link",alt:"Back to sign in"},
+  recovery:{t:"Choose a new password",i:"Use at least 8 characters.",pass:1,go:"Save password"},
+  account:{t:"Your account",go:"Sync now",alt:"Sign out"},
+  choose:{t:"Which plan do you want to keep?",i:"This device already has a plan, and your account has a different one saved. Choose the one to keep. The other will be replaced.",go:"Use my account's plan",alt:"Keep this device's plan",noclose:1}
+};
+function aMsg(m,ok){const e=$("aMsg");e.textContent=m;e.className="msg"+(ok?"":" err")}
+function aOpen(mode,info){
+  aMode=mode;const m=AM[mode];
+  $("aTitle").textContent=m.t;
+  $("aInfo").textContent=info||(mode==="account"?accountInfo():m.i||"");
+  $("aEmailF").hidden=!m.email;$("aPassF").hidden=!m.pass;
+  $("aPass").autocomplete=mode==="signin"?"current-password":"new-password";
+  $("aGo").textContent=m.go;
+  $("aAlt").textContent=m.alt||"";$("aAlt").hidden=!m.alt;
+  $("aLink").textContent=m.link||"";$("aLink").hidden=!m.link;
+  $("aCancel").hidden=!!m.noclose;
+  aMsg("");
+  if(!$("aDlg").open)$("aDlg").showModal();
+  if(m.email)$("aEmail").focus();else if(m.pass)$("aPass").focus();
+}
+async function busy(fn){const b=$("aGo");b.disabled=true;try{await fn()}catch(e){aMsg("Something went wrong. Check your connection and try again.")}finally{b.disabled=false}}
+const okEmail=v=>/^\S+@\S+\.\S+$/.test(v);
+$("aGo").onclick=()=>busy(async()=>{
+  const email=$("aEmail").value.trim(),pw=$("aPass").value;
+  if(aMode==="signin"||aMode==="signup"){
+    if(!okEmail(email))return aMsg("Please enter a valid email address.");
+    if(!pw)return aMsg("Please enter your password.");
+    if(aMode==="signup"&&pw.length<8)return aMsg("Use at least 8 characters for your password.");
+  }
+  if(aMode==="signin"){
+    const {error}=await sb.auth.signInWithPassword({email,password:pw});
+    if(error)return aMsg(/not confirmed/i.test(error.message)?"Please confirm your email first. Check your inbox.":/invalid/i.test(error.message)?"Email or password is incorrect.":error.message);
+    $("aPass").value="";$("aDlg").close();toast("Signed in");
+  }else if(aMode==="signup"){
+    const {data,error}=await sb.auth.signUp({email,password:pw,options:{emailRedirectTo:location.origin+location.pathname}});
+    if(error)return aMsg(error.message);
+    $("aPass").value="";
+    if(data&&data.session){$("aDlg").close();toast("Account created")}
+    else aOpen("signin","Check your email and click the confirmation link, then sign in here.");
+  }else if(aMode==="forgot"){
+    if(!okEmail(email))return aMsg("Please enter a valid email address.");
+    const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
+    if(error)return aMsg(error.message);
+    aOpen("signin","If that email has an account, a reset link is on its way.");
+  }else if(aMode==="recovery"){
+    if(pw.length<8)return aMsg("Use at least 8 characters.");
+    const {error}=await sb.auth.updateUser({password:pw});
+    if(error)return aMsg(error.message);
+    $("aPass").value="";$("aDlg").close();toast("Password updated");
+  }else if(aMode==="account"){
+    await syncNow();aMsg("Up to date.",true);
+  }else if(aMode==="choose"){
+    adopt(pendingChoice.cloud,pendingChoice.stamp);finishChoice("Using your account's plan");
+  }
+});
+$("aAlt").onclick=()=>busy(async()=>{
+  if(aMode==="signin")aOpen("signup");
+  else if(aMode==="signup"||aMode==="forgot")aOpen("signin");
+  else if(aMode==="account")await signOutNow();
+  else if(aMode==="choose"){await push();finishChoice("Your plan is now saved to your account")}
+});
+$("aLink").onclick=()=>aOpen("forgot");
+$("aCancel").onclick=()=>$("aDlg").close();
+$("aDlg").addEventListener("cancel",e=>{if(AM[aMode]&&AM[aMode].noclose)e.preventDefault()});
+$("aDlg").addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.tagName==="INPUT"){e.preventDefault();$("aGo").click()}});
+$("acctBtn").onclick=()=>{
+  if(!sb){toast("Sign-in is not available right now. Check your internet connection and reload.",4500);return}
+  aOpen(user?"account":"signin");
+};
+if(window.supabase&&window.supabase.createClient){
+  try{sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);sb.auth.onAuthStateChange(onAuth)}catch(e){sb=null}
+}
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)syncNow()});
+addEventListener("online",syncNow);
+addEventListener("focus",()=>{pull()});
+setInterval(()=>{if(user&&!document.hidden)syncNow()},60000);
+updateAcct();
 
 const sndLabel=()=>$("sndBtn").textContent="Sounds: "+["Off","Soft","Normal"][snd];
 $("sndBtn").onclick=()=>{snd=(snd+1)%3;try{localStorage.setItem("weeklyPlannerSoundV2",String(snd))}catch(e){}sndLabel();cue("save")};
