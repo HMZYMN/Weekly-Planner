@@ -488,15 +488,15 @@ const $=id=>document.getElementById(id);
 const BRAND={name:"Weekly Planner"};
 const IC={plus:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',edit:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"/></svg>'};
 function goToday(){
-  mode="plan";
-  if(view!=="all")view=todayName;
+  // Open today's own page (the day tab), instead of scrolling inside the week view.
+  mode="plan";view=todayName;
   render();
   requestAnimationFrame(()=>{
-    const card=document.querySelector('[data-card="'+todayName+'"]');
-    if(!card)return;
     const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
-    card.scrollIntoView({behavior:reduce?"auto":"smooth",block:"start"});
-    card.classList.remove("flash");void card.offsetWidth;card.classList.add("flash");
+    const tb=document.querySelector(".toolbar");
+    if(tb)window.scrollTo({top:Math.max(0,tb.getBoundingClientRect().top+window.scrollY-84),behavior:reduce?"auto":"smooth"});
+    const card=document.querySelector('[data-card="'+todayName+'"]');
+    if(card){card.classList.remove("flash");void card.offsetWidth;card.classList.add("flash")}
   });
 }
 function setBrand(){document.title=BRAND.name;document.querySelectorAll(".brand-name").forEach(e=>e.textContent=BRAND.name);$("footBrand").textContent="© "+new Date().getFullYear()+" "+BRAND.name}
