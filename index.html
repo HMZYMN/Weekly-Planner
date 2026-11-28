@@ -344,6 +344,22 @@ body.mode-timer #todayBtn{display:none}
 @media(max-width:820px){.navrow{flex:1 1 100%}}
 @media(prefers-reduced-motion:reduce){.card.flash{animation:none}}
 @media print{#todayBtn{display:none}}
+/* ===== Account settings ===== */
+dialog.wide{width:min(540px,94vw);max-height:calc(100dvh - 32px);overflow:auto}
+.shead{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.shead h3{margin:0}
+.x{width:34px;height:34px;border-radius:10px;font-size:24px;line-height:1;color:var(--muted);display:grid;place-items:center}
+.x:hover{background:var(--hover);color:var(--ink)}
+.sec{border-top:1px solid var(--line);padding-top:18px;margin-top:18px}
+.sec.first{border-top:0;margin-top:6px;padding-top:6px}
+.sec h4{margin:0 0 8px;font-size:15px;letter-spacing:-.01em}
+.sec p{font-size:13px;color:var(--muted);margin:0 0 12px}
+.sec .msg{margin:0 0 10px;font-size:12.5px}
+.sec .msg:empty{display:none}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.danger{border-color:var(--miss);color:var(--miss)}
+.btn.danger:not(:disabled):hover{background:color-mix(in srgb,var(--miss) 12%,transparent);box-shadow:none}
+.sec.danger h4{color:var(--miss)}
 @media print{
 body{background:#fff}h1{background:none;color:#111}
 .toolbar,.now,.overall,.welcome,.tips,.add,.edit,.timer,#fx,.glow-bg,.themebtn,.foot,header.top,.topbar .mid,.topbar .right{display:none}
@@ -477,6 +493,37 @@ body{background:#fff}h1{background:none;color:#111}
     <button class="btn primary" id="aGo" type="button">Continue</button>
   </div>
   <div class="alinks"><button class="link" id="aLink" type="button"></button></div>
+</dialog>
+<dialog id="sDlg" class="wide">
+  <div class="shead"><h3>Account settings</h3><button class="x" id="sClose" type="button" aria-label="Close">&times;</button></div>
+  <section class="sec first">
+    <h4>Email address</h4>
+    <p>Your current email is <b id="sEmail"></b>.</p>
+    <div class="f"><label for="sNewEmail">New email</label><input id="sNewEmail" type="email" autocomplete="email" inputmode="email"></div>
+    <p class="msg" id="mEmail"></p>
+    <button class="btn" id="bEmail" type="button">Change email</button>
+  </section>
+  <section class="sec">
+    <h4>Password</h4>
+    <div class="f"><label for="sCurPw">Current password</label><div class="pw"><input id="sCurPw" type="password" autocomplete="current-password"><button class="eye" type="button" data-for="sCurPw" aria-label="Show password" aria-pressed="false" title="Show password"><svg class="i-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="i-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 6.2A10 10 0 0 1 12 6c6.4 0 10 6 10 6a17 17 0 0 1-3.2 3.9M6.6 7.5C4 9.2 2 12 2 12s3.6 6 10 6c1.5 0 2.9-.3 4.1-.8M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg></button></div></div>
+    <div class="f"><label for="sNewPw">New password (at least 8 characters)</label><div class="pw"><input id="sNewPw" type="password" autocomplete="new-password"><button class="eye" type="button" data-for="sNewPw" aria-label="Show password" aria-pressed="false" title="Show password"><svg class="i-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="i-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 6.2A10 10 0 0 1 12 6c6.4 0 10 6 10 6a17 17 0 0 1-3.2 3.9M6.6 7.5C4 9.2 2 12 2 12s3.6 6 10 6c1.5 0 2.9-.3 4.1-.8M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg></button></div></div>
+    <p class="msg" id="mPw"></p>
+    <button class="btn" id="bPw" type="button">Change password</button>
+  </section>
+  <section class="sec">
+    <h4>Your data</h4>
+    <p>Download everything the app stores about you: your account details and your whole plan. You can restore the file later from Data, then Restore backup.</p>
+    <p class="msg" id="mData"></p>
+    <button class="btn" id="bData" type="button">Download my data</button>
+  </section>
+  <section class="sec danger">
+    <h4>Delete account</h4>
+    <p>This permanently deletes your account and your saved plan from our servers, and clears the plan from this device. It cannot be undone. Download your data first if you want to keep a copy.</p>
+    <div class="f"><label for="sDelPw">Your password</label><div class="pw"><input id="sDelPw" type="password" autocomplete="current-password"><button class="eye" type="button" data-for="sDelPw" aria-label="Show password" aria-pressed="false" title="Show password"><svg class="i-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="i-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 6.2A10 10 0 0 1 12 6c6.4 0 10 6 10 6a17 17 0 0 1-3.2 3.9M6.6 7.5C4 9.2 2 12 2 12s3.6 6 10 6c1.5 0 2.9-.3 4.1-.8M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg></button></div></div>
+    <div class="f"><label for="sDelWord">Type DELETE to confirm</label><input id="sDelWord" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false"></div>
+    <p class="msg" id="mDel"></p>
+    <button class="btn danger" id="bDel" type="button" disabled>Delete my account</button>
+  </section>
 </dialog>
 <canvas id="fx" aria-hidden="true"></canvas>
 <div class="toast" id="toast" hidden></div>
@@ -1032,7 +1079,7 @@ const AM={
   signup:{t:"Create your account",i:"Your plan will sync across every device you sign in on. Use at least 8 characters for the password.",email:1,pass:1,go:"Create account",alt:"I have an account"},
   forgot:{t:"Reset your password",i:"Enter your email and we will send you a link to choose a new password.",email:1,go:"Send reset link",alt:"Back to sign in"},
   recovery:{t:"Choose a new password",i:"Use at least 8 characters.",pass:1,go:"Save password"},
-  account:{t:"Your account",go:"Sync now",alt:"Sign out"},
+  account:{t:"Your account",go:"Sync now",alt:"Sign out",link:"Account settings"},
   choose:{t:"Which plan do you want to keep?",i:"This device already has a plan, and your account has a different one saved. Choose the one to keep. The other will be replaced.",go:"Use my account's plan",alt:"Keep this device's plan",noclose:1}
 };
 function hidePw(){$("aPass").type="password";$("aEye").setAttribute("aria-pressed","false");$("aEye").setAttribute("aria-label","Show password");$("aEye").title="Show password"}
@@ -1101,7 +1148,7 @@ $("aAlt").onclick=()=>busy(async()=>{
   else if(aMode==="account")await signOutNow();
   else if(aMode==="choose"){await push();finishChoice("Your plan is now saved to your account")}
 });
-$("aLink").onclick=()=>aOpen("forgot");
+$("aLink").onclick=()=>aMode==="account"?openSettings():aOpen("forgot");
 $("aCancel").onclick=()=>$("aDlg").close();
 $("aDlg").addEventListener("cancel",e=>{if(AM[aMode]&&AM[aMode].noclose)e.preventDefault()});
 $("aDlg").addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.tagName==="INPUT"){e.preventDefault();$("aGo").click()}});
@@ -1109,6 +1156,83 @@ $("acctBtn").onclick=()=>{
   if(!sb){toast("Sign-in is not available right now. Check your internet connection and reload.",4500);return}
   aOpen(user?"account":"signin");
 };
+/* Account settings: email, password, data download, delete account */
+const mset=(id,t,ok)=>{const e=$(id);e.textContent=t;e.className="msg"+(ok?"":" err")};
+function friendly(e){
+  const m=(e&&e.message)||"";
+  if(/rate limit|too many/i.test(m))return "Too many attempts. Please wait a few minutes and try again.";
+  if(/different from the old|same password/i.test(m))return "The new password must be different from the old one.";
+  if(/reauth|recent/i.test(m))return "For security, sign out, sign in again, and then retry.";
+  if(/failed to fetch|network|load failed/i.test(m))return "Could not reach the server. Check your connection and try again.";
+  return m||"Something went wrong. Please try again.";
+}
+function delCheck(){$("bDel").disabled=$("sDelWord").value!=="DELETE"}
+async function guard(btn,fn){btn.disabled=true;try{await fn()}catch(e){console.error(e);toast(friendly(e),4000)}finally{btn.disabled=false;delCheck()}}
+function saveFile(obj,name){
+  const b=new Blob([JSON.stringify(obj,null,1)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name;
+  document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+function resetEyes(){document.querySelectorAll(".eye[data-for]").forEach(b=>{$(b.dataset.for).type="password";b.setAttribute("aria-pressed","false");b.setAttribute("aria-label","Show password");b.title="Show password"})}
+document.querySelectorAll(".eye[data-for]").forEach(b=>b.onclick=()=>{
+  const i=$(b.dataset.for),show=i.type==="password";
+  i.type=show?"text":"password";
+  b.setAttribute("aria-pressed",show?"true":"false");
+  b.setAttribute("aria-label",show?"Hide password":"Show password");
+  b.title=show?"Hide password":"Show password";
+  i.focus();
+});
+function openSettings(){
+  if(!user)return;
+  $("aDlg").close();
+  $("sEmail").textContent=user.email;
+  ["sNewEmail","sCurPw","sNewPw","sDelPw","sDelWord"].forEach(i=>$(i).value="");
+  ["mEmail","mPw","mData","mDel"].forEach(i=>mset(i,"",true));
+  resetEyes();delCheck();$("sDlg").showModal();
+}
+$("sClose").onclick=()=>$("sDlg").close();
+$("sDlg").addEventListener("close",resetEyes);
+$("sDelWord").oninput=delCheck;
+$("bEmail").onclick=()=>guard($("bEmail"),async()=>{
+  const v=$("sNewEmail").value.trim();
+  if(!okEmail(v))return mset("mEmail","Please enter a valid email address.");
+  if(v.toLowerCase()===String(user.email).toLowerCase())return mset("mEmail","That is already your email address.");
+  const {error}=await sb.auth.updateUser({email:v},{emailRedirectTo:location.origin+location.pathname});
+  if(error)return mset("mEmail",friendly(error));
+  mset("mEmail","Check your inbox. We sent a confirmation link to the new address, and may also send one to your current address. Your email changes after you confirm.",true);
+});
+$("bPw").onclick=()=>guard($("bPw"),async()=>{
+  const cur=$("sCurPw").value,nw=$("sNewPw").value;
+  if(!cur)return mset("mPw","Enter your current password.");
+  if(nw.length<8)return mset("mPw","Use at least 8 characters for the new password.");
+  if(nw===cur)return mset("mPw","Choose a password that is different from the current one.");
+  const re=await sb.auth.signInWithPassword({email:user.email,password:cur});
+  if(re.error)return mset("mPw","Your current password is incorrect.");
+  const {error}=await sb.auth.updateUser({password:nw});
+  if(error)return mset("mPw",friendly(error));
+  $("sCurPw").value="";$("sNewPw").value="";resetEyes();
+  mset("mPw","Password updated.",true);
+});
+$("bData").onclick=()=>guard($("bData"),async()=>{
+  let plan=cloudPayload();
+  if(!dirty){try{const row=await fetchCloud(),c=row&&clean(row.data);if(c)plan={tasks:c.tasks,checks:c.checks,history:c.history,best:c.best}}catch(e){}}
+  saveFile({app:"weekly-planner",v:1,exported_at:new Date().toISOString(),account:{email:user.email,id:user.id,created_at:user.created_at||null},...plan},"weekly-planner-my-data.json");
+  mset("mData","Downloaded. Keep the file somewhere safe.",true);
+});
+$("bDel").onclick=()=>guard($("bDel"),async()=>{
+  const pw=$("sDelPw").value;
+  if(!pw)return mset("mDel","Enter your password to confirm.");
+  if($("sDelWord").value!=="DELETE")return mset("mDel","Type DELETE to confirm.");
+  const re=await sb.auth.signInWithPassword({email:user.email,password:pw});
+  if(re.error)return mset("mDel","Your password is incorrect.");
+  const {error}=await sb.rpc("delete_my_account");
+  if(error){console.error(error);return mset("mDel",/could not find|does not exist|PGRST202/i.test((error.message||"")+(error.code||""))?"Account deletion is not set up on the server yet.":friendly(error))}
+  try{await sb.auth.signOut()}catch(e){}
+  user=null;syncedFor=null;pendingChoice=null;lsSet(OWNER,null);setDirty(false);
+  st=blank();lsSet(KEY,JSON.stringify(st));
+  $("sDlg").close();updateAcct();render();toast("Your account and cloud data were deleted.",5000);
+});
+
 if(window.supabase&&window.supabase.createClient){
   try{sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);sb.auth.onAuthStateChange(onAuth)}catch(e){sb=null}
 }
